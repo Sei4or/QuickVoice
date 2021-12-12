@@ -196,10 +196,10 @@ HRESULT SoundInterface::playSound(short int soundId)
 
 void SoundInterface::preloadSounds()
 {
-	loadSound(WHAT_A_SAVE);
-	loadSound(NICE_SHOT);
-	loadSound(THANKS);
-	loadSound(E);
+	for (std::unordered_map<std::string, short int>::iterator i = quickChatIds.begin(); i != quickChatIds.end(); i++)
+	{
+		loadSound(i->second);
+	}
 }
 
 void SoundInterface::unloadSounds()

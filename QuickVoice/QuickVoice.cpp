@@ -30,30 +30,22 @@ void QuickVoice::hookChatMessageEvent()
 			if (params)
 			{
 				ChatMessage* chatMessage = static_cast<ChatMessage*>(params);
+				if (chatMessage->PlayerName == nullptr)
+				{
+					return;
+				}
 				std::wstring playerName(chatMessage->PlayerName);
+				if (chatMessage->Message == nullptr)
+				{
+					return;
+				}
 				std::wstring message(chatMessage->Message);
 				std::string bMessage(message.begin(), message.end());
 				cvarManager->log("Message: " + bMessage);
 
-				if (bMessage == "Group2Message4" || bMessage == "What a save!") {
-					SoundInterface::playSound(WHAT_A_SAVE);
-				}
-				else if (bMessage == "Group2Message1" || bMessage == "Nice shot!") {
-					SoundInterface::playSound(NICE_SHOT);
-				}
-				else if (bMessage == "Group2Message3" || bMessage == "Thanks!") {
-					SoundInterface::playSound(THANKS);
-				}
-				else if (bMessage == "e" || bMessage == "E") {
-					SoundInterface::playSound(E);
-				}
-				else if (bMessage == "Group1Message1" || bMessage == "I got it!")
+				if (SoundInterface::quickChatIds.find(bMessage) != SoundInterface::quickChatIds.end())
 				{
-					SoundInterface::playSound(I_GOT_IT);
-				}
-				else if (bMessage == "Group1Message2" || bMessage == "Need boost!")
-				{
-					SoundInterface::playSound(NEED_BOOST);
+					SoundInterface::playSound(SoundInterface::quickChatIds.at(bMessage));
 				}
 			}
 		});
