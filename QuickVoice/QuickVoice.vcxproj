@@ -131,12 +131,69 @@
     <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="QuickVoice.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="sound_interface.h" />
     <ClInclude Include="SourceVoiceManager.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="QuickVoice.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BakkesMod.props" />
+    <None Include="update_version.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="sounds\0.wav" />
+    <Media Include="sounds\1.wav" />
+    <Media Include="sounds\10.wav" />
+    <Media Include="sounds\11.wav" />
+    <Media Include="sounds\12.wav" />
+    <Media Include="sounds\13.wav" />
+    <Media Include="sounds\14.wav" />
+    <Media Include="sounds\15.wav" />
+    <Media Include="sounds\16.wav" />
+    <Media Include="sounds\17.wav" />
+    <Media Include="sounds\18.wav" />
+    <Media Include="sounds\19.wav" />
+    <Media Include="sounds\2.wav" />
+    <Media Include="sounds\20.wav" />
+    <Media Include="sounds\21.wav" />
+    <Media Include="sounds\22.wav" />
+    <Media Include="sounds\23.wav" />
+    <Media Include="sounds\24.wav" />
+    <Media Include="sounds\25.wav" />
+    <Media Include="sounds\26.wav" />
+    <Media Include="sounds\27.wav" />
+    <Media Include="sounds\28.wav" />
+    <Media Include="sounds\29.wav" />
+    <Media Include="sounds\3.wav" />
+    <Media Include="sounds\30.wav" />
+    <Media Include="sounds\31.wav" />
+    <Media Include="sounds\32.wav" />
+    <Media Include="sounds\33.wav" />
+    <Media Include="sounds\34.wav" />
+    <Media Include="sounds\35.wav" />
+    <Media Include="sounds\36.wav" />
+    <Media Include="sounds\37.wav" />
+    <Media Include="sounds\38.wav" />
+    <Media Include="sounds\39.wav" />
+    <Media Include="sounds\4.wav" />
+    <Media Include="sounds\40.wav" />
+    <Media Include="sounds\41.wav" />
+    <Media Include="sounds\42.wav" />
+    <Media Include="sounds\43.wav" />
+    <Media Include="sounds\44.wav" />
+    <Media Include="sounds\45.wav" />
+    <Media Include="sounds\46.wav" />
+    <Media Include="sounds\47.wav" />
+    <Media Include="sounds\48.wav" />
+    <Media Include="sounds\49.wav" />
+    <Media Include="sounds\5.wav" />
+    <Media Include="sounds\6.wav" />
+    <Media Include="sounds\7.wav" />
+    <Media Include="sounds\8.wav" />
+    <Media Include="sounds\9.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -134,10 +134,169 @@
     <ClInclude Include="SourceVoiceManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="QuickVoice.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="BakkesMod.props" />
+    <None Include="update_version.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="sounds\0.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\1.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\2.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\3.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\4.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\5.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\6.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\7.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\8.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\9.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\10.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\11.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\12.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\13.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\14.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\15.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\16.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\17.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\18.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\19.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\20.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\21.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\22.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\23.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\24.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\25.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\26.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\27.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\28.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\29.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\30.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\31.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\32.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\33.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\34.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\35.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\36.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\37.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\38.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\39.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\40.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\41.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\42.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\43.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\44.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\45.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\46.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\47.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\48.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="sounds\49.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>
