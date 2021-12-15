@@ -15,6 +15,22 @@ IXAudio2* pXAudio2 = nullptr;
 IXAudio2MasteringVoice* pMasterVoice = nullptr;
 WAVEFORMATEXTENSIBLE* wfx = nullptr;
 std::unordered_map<short int, XAUDIO2_BUFFER> sounds;
+std::vector<IXAudio2SourceVoice*> source_voices;
+int current_voice;
+
+HRESULT createSourceVoices()
+{
+	HRESULT hr = S_OK;
+
+	IXAudio2SourceVoice* pSourceVoice;
+	if (FAILED(hr = pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)wfx)))
+	{
+		return hr;
+	}
+
+	source_voices.push_back(pSourceVoice);
+	return hr;
+}
 
 HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
 {
@@ -167,12 +183,6 @@ HRESULT SoundInterface::playSound(short int soundId)
 	}
 
 	HRESULT hr;
-
-	IXAudio2SourceVoice* pSourceVoice;
-	if (FAILED(hr = pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)wfx)))
-	{
-		return hr;
-	}
 
 	if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&sounds.at(soundId))))
 	{

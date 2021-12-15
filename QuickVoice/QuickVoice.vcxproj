@@ -113,6 +113,7 @@
     <ClCompile Include="QuickVoice.cpp" />
     <ClCompile Include="QuickVoiceGUI.cpp" />
     <ClCompile Include="sound_interface.cpp" />
+    <ClCompile Include="SourceVoiceManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="imgui\imconfig.h" />
@@ -131,6 +132,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="QuickVoice.h" />
     <ClInclude Include="sound_interface.h" />
+    <ClInclude Include="SourceVoiceManager.h" />
     <ClInclude Include="version.h" />
   </ItemGroup>
   <ItemGroup>

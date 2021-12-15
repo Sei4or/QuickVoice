@@ -41,7 +41,7 @@ void QuickVoice::hookChatMessageEvent()
 				}
 				std::wstring message(chatMessage->Message);
 				std::string bMessage(message.begin(), message.end());
-				cvarManager->log("Message: " + bMessage);
+				// cvarManager->log("Message: " + bMessage);
 
 				if (SoundInterface::quickChatIds.find(bMessage) != SoundInterface::quickChatIds.end())
 				{
@@ -102,5 +102,5 @@ void QuickVoice::onLoad()
 
 void QuickVoice::onUnload()
 {
-	// SoundInterface::unload();
+	SoundInterface::unload();
 }
