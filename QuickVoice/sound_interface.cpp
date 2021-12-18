@@ -11,216 +11,203 @@
 #define fourccXWMA 'AMWX'
 #define fourccDPDS 'sdpd'
 
-IXAudio2* pXAudio2 = nullptr;
-IXAudio2MasteringVoice* pMasterVoice = nullptr;
-WAVEFORMATEXTENSIBLE* wfx = nullptr;
-std::unordered_map<short int, XAUDIO2_BUFFER> sounds;
-std::vector<IXAudio2SourceVoice*> source_voices;
-int current_voice;
-
-HRESULT createSourceVoices()
+namespace SoundInterface
 {
-	HRESULT hr = S_OK;
-
-	IXAudio2SourceVoice* pSourceVoice;
-	if (FAILED(hr = pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)wfx)))
+	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
 	{
-		return hr;
-	}
+		HRESULT hr = S_OK;
+		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
+			return HRESULT_FROM_WIN32(GetLastError());
 
-	source_voices.push_back(pSourceVoice);
-	return hr;
-}
+		DWORD dwChunkType;
+		DWORD dwChunkDataSize;
+		DWORD dwRIFFDataSize = 0;
+		DWORD dwFileType;
+		DWORD bytesRead = 0;
+		DWORD dwOffset = 0;
 
-HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
-{
-	HRESULT hr = S_OK;
-	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
-		return HRESULT_FROM_WIN32(GetLastError());
-
-	DWORD dwChunkType;
-	DWORD dwChunkDataSize;
-	DWORD dwRIFFDataSize = 0;
-	DWORD dwFileType;
-	DWORD bytesRead = 0;
-	DWORD dwOffset = 0;
-
-	while (hr == S_OK)
-	{
-		DWORD dwRead;
-		if (0 == ReadFile(hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL))
-			hr = HRESULT_FROM_WIN32(GetLastError());
-
-		if (0 == ReadFile(hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL))
-			hr = HRESULT_FROM_WIN32(GetLastError());
-
-		switch (dwChunkType)
+		while (hr == S_OK)
 		{
-		case fourccRIFF:
-			dwRIFFDataSize = dwChunkDataSize;
-			dwChunkDataSize = 4;
-			if (0 == ReadFile(hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL))
+			DWORD dwRead;
+			if (0 == ReadFile(hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL))
 				hr = HRESULT_FROM_WIN32(GetLastError());
-			break;
 
-		default:
-			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
-				return HRESULT_FROM_WIN32(GetLastError());
+			if (0 == ReadFile(hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL))
+				hr = HRESULT_FROM_WIN32(GetLastError());
+
+			switch (dwChunkType)
+			{
+			case fourccRIFF:
+				dwRIFFDataSize = dwChunkDataSize;
+				dwChunkDataSize = 4;
+				if (0 == ReadFile(hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL))
+					hr = HRESULT_FROM_WIN32(GetLastError());
+				break;
+
+			default:
+				if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
+					return HRESULT_FROM_WIN32(GetLastError());
+			}
+
+			dwOffset += sizeof(DWORD) * 2;
+
+			if (dwChunkType == fourcc)
+			{
+				dwChunkSize = dwChunkDataSize;
+				dwChunkDataPosition = dwOffset;
+				return S_OK;
+			}
+
+			dwOffset += dwChunkDataSize;
+
+			if (bytesRead >= dwRIFFDataSize) return S_FALSE;
+
 		}
 
-		dwOffset += sizeof(DWORD) * 2;
-
-		if (dwChunkType == fourcc)
-		{
-			dwChunkSize = dwChunkDataSize;
-			dwChunkDataPosition = dwOffset;
-			return S_OK;
-		}
-
-		dwOffset += dwChunkDataSize;
-
-		if (bytesRead >= dwRIFFDataSize) return S_FALSE;
+		return S_OK;
 
 	}
 
-	return S_OK;
-
-}
-
-HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
-{
-	HRESULT hr = S_OK;
-	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
-		return HRESULT_FROM_WIN32(GetLastError());
-	DWORD dwRead;
-	if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
-		hr = HRESULT_FROM_WIN32(GetLastError());
-	return hr;
-}
-
-HRESULT SoundInterface::loadSound(short int soundId)
-{
-	HRESULT hr = S_OK;
-
-	if (pXAudio2 == nullptr)
+	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
 	{
+		HRESULT hr = S_OK;
+		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
+			return HRESULT_FROM_WIN32(GetLastError());
+		DWORD dwRead;
+		if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
+			hr = HRESULT_FROM_WIN32(GetLastError());
+		return hr;
+	}
+
+	HRESULT SoundManager::initialize()
+	{
+		HRESULT hr = S_OK;
+
 		// Create an interface to use the XAudio2 engine
-		if (FAILED(hr = XAudio2Create(&pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
+		IXAudio2* rawPXAudio2;
+		if (FAILED(hr = XAudio2Create(&rawPXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
 		{
-			return hr;
+			throw hr;
 		}
-	}
 
-	if (pMasterVoice == nullptr)
-	{
+		this->pXAudio2 = std::shared_ptr<IXAudio2>(rawPXAudio2, [](IXAudio2* p) {
+			p->Release();
+		});
+
 		// Create a Mastering Voice
-		if (FAILED(hr = pXAudio2->CreateMasteringVoice(&pMasterVoice)))
+		IXAudio2MasteringVoice* rawPMasterVoice;
+		if (FAILED(hr = pXAudio2->CreateMasteringVoice(&rawPMasterVoice)))
 		{
-			return hr;
+			throw hr;
 		}
+
+		this->pMasterVoice = std::shared_ptr<IXAudio2MasteringVoice>(rawPMasterVoice);
+
+		this->sourceVoiceManager.initialize(this->pXAudio2);
 	}
 
-	XAUDIO2_BUFFER buffer = { 0 };
-
-	TCHAR* strFileName = (TCHAR*)(_globalGameWrapper->GetDataFolder() / "QuickVoice" / (std::to_string(soundId) + ".wav")).c_str();
-	// Open the file
-	HANDLE hFile = CreateFile(
-		strFileName,
-		GENERIC_READ,
-		FILE_SHARE_READ,
-		NULL,
-		OPEN_EXISTING,
-		0,
-		NULL);
-
-	if (INVALID_HANDLE_VALUE == hFile)
+	HRESULT SoundManager::loadSound(short int soundId)
 	{
-		HRESULT_FROM_WIN32(GetLastError());
-	}
+		HRESULT hr = S_OK;
 
-	if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
-	{
-		HRESULT_FROM_WIN32(GetLastError());
-	}
+		XAUDIO2_BUFFER buffer = { 0 };
 
-	DWORD dwChunkSize;
-	DWORD dwChunkPosition;
-	//check the file type, should be fourccWAVE or 'XWMA'
-	FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-	DWORD filetype;
-	ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-	if (filetype != fourccWAVE)
-	{
-		S_FALSE;
-	}
+		TCHAR* strFileName = (TCHAR*)(_globalGameWrapper->GetDataFolder() / "QuickVoice" / (std::to_string(soundId) + ".wav")).c_str();
+		// Open the file
+		HANDLE hFile = CreateFile(
+			strFileName,
+			GENERIC_READ,
+			FILE_SHARE_READ,
+			NULL,
+			OPEN_EXISTING,
+			0,
+			NULL);
 
-	FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-	if (wfx == nullptr)
-	{
-		wfx = new WAVEFORMATEXTENSIBLE();
-		ReadChunkData(hFile, wfx, dwChunkSize, dwChunkPosition);
-	}
+		if (INVALID_HANDLE_VALUE == hFile)
+		{
+			HRESULT_FROM_WIN32(GetLastError());
+		}
 
-	//fill out the audio data buffer with the contents of the fourccDATA chunk
-	FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
-	BYTE* pDataBuffer = new BYTE[dwChunkSize];
-	ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
+		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
+		{
+			HRESULT_FROM_WIN32(GetLastError());
+		}
 
-	buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-	buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-	buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
+		DWORD dwChunkSize;
+		DWORD dwChunkPosition;
+		//check the file type, should be fourccWAVE or 'XWMA'
+		FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
+		DWORD filetype;
+		ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
+		if (filetype != fourccWAVE)
+		{
+			S_FALSE;
+		}
 
-	sounds.insert(std::make_pair(soundId, buffer));
+		FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
+		if (this->loadedSounds.size() == 0)
+		{
+			_globalCvarManager->log("Updating wfx");
+			WAVEFORMATEXTENSIBLE* wfx = new WAVEFORMATEXTENSIBLE();
+			ReadChunkData(hFile, wfx, dwChunkSize, dwChunkPosition);
+			this->sourceVoiceManager.updateWfx(wfx);
+		}
 
-	return hr;
-}
+		//fill out the audio data buffer with the contents of the fourccDATA chunk
+		FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
+		BYTE* pDataBuffer = new BYTE[dwChunkSize];
+		ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
 
-HRESULT SoundInterface::playSound(short int soundId)
-{
-	if (sounds.find(soundId) == sounds.end())
-	{
-		loadSound(soundId);
-	}
+		buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
+		buffer.pAudioData = pDataBuffer;  //buffer containing audio data
+		buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
 
-	HRESULT hr;
+		this->loadedSounds.insert(std::make_pair(soundId, buffer));
 
-	if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&sounds.at(soundId))))
-	{
 		return hr;
 	}
 
-	CVarWrapper volumeCvar = _globalCvarManager->getCvar("qv_volume");
-	if (volumeCvar)
+	HRESULT SoundManager::playSound(short int soundId)
 	{
-		if (FAILED(hr = pSourceVoice->SetVolume(volumeCvar.getFloatValue())))
+		if (this->loadedSounds.find(soundId) == this->loadedSounds.end())
+		{
+			loadSound(soundId);
+		}
+
+		HRESULT hr = S_OK;
+		std::shared_ptr<IXAudio2SourceVoice> pSourceVoice = sourceVoiceManager.getReadySourceVoice();
+
+		if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&this->loadedSounds.at(soundId))))
 		{
 			return hr;
 		}
-	}
 
-	if (FAILED(hr = pSourceVoice->Start(0)))
-	{
+		FAILED(hr = pSourceVoice->Start(0));
 		return hr;
 	}
-}
 
-void SoundInterface::preloadSounds()
-{
-	for (std::unordered_map<std::string, short int>::iterator i = quickChatIds.begin(); i != quickChatIds.end(); i++)
+	void SoundManager::preloadSounds()
 	{
-		loadSound(i->second);
+		for (std::unordered_map<std::string, short int>::iterator i = quickChatIds.begin(); i != quickChatIds.end(); i++)
+		{
+			loadSound(i->second);
+		}
 	}
-}
 
-void SoundInterface::unloadSounds()
-{
-	sounds.clear();
-}
+	void SoundManager::unloadSounds()
+	{
+		this->loadedSounds.clear();
+	}
 
-void SoundInterface::unload()
-{
-	unloadSounds();
-	delete wfx;
-	delete pMasterVoice;
-	delete pXAudio2;
+	void SoundManager::unload()
+	{
+		unloadSounds();
+	}
+	
+	HRESULT SoundManager::setVolume(float newVolume)
+	{
+		HRESULT hr = S_OK;
+		// FAILED(hr = this->pMasterVoice->SetVolume(newVolume));
+		return hr;
+	}
 }

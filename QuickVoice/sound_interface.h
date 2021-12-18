@@ -1,5 +1,7 @@
 #pragma once
 
+#include "SourceVoiceManager.h"
+
 #include <xaudio2.h>
 #include <memory>
 #include <unordered_map>
@@ -114,9 +116,21 @@ namespace SoundInterface
 		{"Group5Message8", 49}
 	};
 
-	HRESULT loadSound(short int soundId);
-	HRESULT playSound(short int soundId);
-	void preloadSounds();
-	void unloadSounds();
-	void unload();
+	class SoundManager
+	{
+	public:
+		HRESULT initialize();
+		HRESULT loadSound(short int soundId);
+		HRESULT playSound(short int soundId);
+		void preloadSounds();
+		void unloadSounds();
+		void unload();
+		HRESULT setVolume(float newVolume);
+	private:
+		std::shared_ptr<IXAudio2> pXAudio2;
+		std::shared_ptr<IXAudio2MasteringVoice> pMasterVoice;
+		std::shared_ptr<WAVEFORMATEXTENSIBLE> wfx;
+		std::unordered_map<short int, XAUDIO2_BUFFER> loadedSounds;
+		SourceVoiceManager sourceVoiceManager;
+	};
 }

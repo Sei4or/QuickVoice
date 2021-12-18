@@ -4,7 +4,6 @@
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
 # BakkesMod
-./plugins
 ./QuickVoice/all_sounds
 ./QuickVoice/previous_audio_solutions.cpp
 

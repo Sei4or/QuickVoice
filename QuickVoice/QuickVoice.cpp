@@ -30,22 +30,16 @@ void QuickVoice::hookChatMessageEvent()
 			if (params)
 			{
 				ChatMessage* chatMessage = static_cast<ChatMessage*>(params);
-				if (chatMessage->PlayerName == nullptr)
-				{
-					return;
-				}
+				if (chatMessage->PlayerName == nullptr) return;
 				std::wstring playerName(chatMessage->PlayerName);
-				if (chatMessage->Message == nullptr)
-				{
-					return;
-				}
+				if (chatMessage->Message == nullptr) return;
 				std::wstring message(chatMessage->Message);
 				std::string bMessage(message.begin(), message.end());
 				// cvarManager->log("Message: " + bMessage);
 
 				if (SoundInterface::quickChatIds.find(bMessage) != SoundInterface::quickChatIds.end())
 				{
-					SoundInterface::playSound(SoundInterface::quickChatIds.at(bMessage));
+					this->soundManager.playSound(SoundInterface::quickChatIds.at(bMessage));
 				}
 			}
 		});
@@ -68,7 +62,11 @@ void QuickVoice::onLoad()
 		enabledCvar = cvarManager->registerCvar("qv_enabled", "1");
 	}
 	enabledCvar.bindTo(enabled);
-	if (enabled) this->hookChatMessageEvent();
+	if (enabled)
+	{
+		this->hookChatMessageEvent();
+		this->soundManager.initialize();
+	}
 	enabledCvar.addOnValueChanged([this](std::string oldValue, CVarWrapper newCvar) {
 		if (newCvar.getBoolValue())
 		{
@@ -78,7 +76,7 @@ void QuickVoice::onLoad()
 		{
 			this->unHookChatMessageEvent();
 		}
-		});
+	});
 
 	CVarWrapper preloadSoundsCvar = cvarManager->getCvar("qv_preload_sounds");
 	if (!preloadSoundsCvar)
@@ -89,7 +87,7 @@ void QuickVoice::onLoad()
 		if (newCvar.getBoolValue())
 		{
 			cvarManager->log("Preloading sounds");
-			SoundInterface::preloadSounds();
+			soundManager.preloadSounds();
 		}
 	});
 
@@ -98,9 +96,12 @@ void QuickVoice::onLoad()
 	{
 		volumeCvar = cvarManager->registerCvar("qv_volume", "1.0");
 	}
+	volumeCvar.addOnValueChanged([this](std::string oldValue, CVarWrapper newCvar) {
+		this->soundManager.setVolume(newCvar.getFloatValue());
+	});
 }
 
 void QuickVoice::onUnload()
 {
-	SoundInterface::unload();
+	// soundManager.unload();
 }

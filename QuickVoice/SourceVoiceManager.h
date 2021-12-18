@@ -7,10 +7,13 @@
 class SourceVoiceManager
 {
 public:
-	void initializeWfx(WAVEFORMATEXTENSIBLE* wfx);
+	void initialize(std::shared_ptr<IXAudio2> pXAudio2);
+	void updateWfx(WAVEFORMATEXTENSIBLE* wfx);
 	std::shared_ptr<IXAudio2SourceVoice> getReadySourceVoice();
 private:
+	std::shared_ptr<IXAudio2> pXAudio2;
+	std::shared_ptr<IXAudio2MasteringVoice> pMasterVoice;
 	std::vector<std::shared_ptr<IXAudio2SourceVoice>> sourceVoices;
-	std::vector<short int> readySourceVoiceIndicies;
+	std::shared_ptr<std::deque<short int>> readySourceVoiceIndices;
 	WAVEFORMATEXTENSIBLE* wfx;
 };
