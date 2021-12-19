@@ -14,7 +14,6 @@ class QuickVoice: public BakkesMod::Plugin::BakkesModPlugin, public BakkesMod::P
 	std::shared_ptr<bool> enabled;
 	SoundInterface::SoundManager soundManager;
 
-	//Boilerplate
 	virtual void onLoad();
 	virtual void onUnload();
 
@@ -25,23 +24,5 @@ class QuickVoice: public BakkesMod::Plugin::BakkesModPlugin, public BakkesMod::P
 	void RenderSettings() override;
 	std::string GetPluginName() override;
 	void SetImGuiContext(uintptr_t ctx) override;
-
-	// Inherited via PluginWindow
-	/*
-
-	bool isWindowOpen_ = false;
-	bool isMinimized_ = false;
-	std::string menuTitle_ = "QuickVoice";
-
-	virtual void Render() override;
-	virtual std::string GetMenuName() override;
-	virtual std::string GetMenuTitle() override;
-	virtual void SetImGuiContext(uintptr_t ctx) override;
-	virtual bool ShouldBlockInput() override;
-	virtual bool IsActiveOverlay() override;
-	virtual void OnOpen() override;
-	virtual void OnClose() override;
-	
-	*/
 };
 

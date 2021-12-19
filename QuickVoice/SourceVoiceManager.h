@@ -4,16 +4,21 @@
 #include <memory>
 #include <vector>
 
-class SourceVoiceManager
+namespace SoundInterface
 {
-public:
-	void initialize(std::shared_ptr<IXAudio2> pXAudio2);
-	void updateWfx(WAVEFORMATEXTENSIBLE* wfx);
-	std::shared_ptr<IXAudio2SourceVoice> getReadySourceVoice();
-private:
-	std::shared_ptr<IXAudio2> pXAudio2;
-	std::shared_ptr<IXAudio2MasteringVoice> pMasterVoice;
-	std::vector<std::shared_ptr<IXAudio2SourceVoice>> sourceVoices;
-	std::shared_ptr<std::deque<short int>> readySourceVoiceIndices;
-	WAVEFORMATEXTENSIBLE* wfx;
-};
+	class SoundManager;
+
+	class SourceVoiceManager
+	{
+	public:
+		SourceVoiceManager(SoundManager& soundManager);
+		std::shared_ptr<IXAudio2SourceVoice> getReadySourceVoice();
+	private:
+		SoundManager& soundManager;
+		std::vector<std::shared_ptr<IXAudio2SourceVoice>> sourceVoices;
+		std::shared_ptr<std::deque<short int>> readySourceVoiceIndices;
+		WAVEFORMATEXTENSIBLE wfx = {
+			{ 1, 1, 22050, 44100, 2, 16, 0 }
+		};
+	};
+}

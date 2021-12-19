@@ -118,7 +118,10 @@ namespace SoundInterface
 
 	class SoundManager
 	{
+	friend class SourceVoiceManager;
+
 	public:
+		SoundManager();
 		HRESULT initialize();
 		HRESULT loadSound(short int soundId);
 		HRESULT playSound(short int soundId);
@@ -127,9 +130,8 @@ namespace SoundInterface
 		void unload();
 		HRESULT setVolume(float newVolume);
 	private:
-		std::shared_ptr<IXAudio2> pXAudio2;
-		std::shared_ptr<IXAudio2MasteringVoice> pMasterVoice;
-		std::shared_ptr<WAVEFORMATEXTENSIBLE> wfx;
+		std::unique_ptr<IXAudio2> pXAudio2;
+		std::unique_ptr<IXAudio2MasteringVoice> pMasterVoice;
 		std::unordered_map<short int, XAUDIO2_BUFFER> loadedSounds;
 		SourceVoiceManager sourceVoiceManager;
 	};

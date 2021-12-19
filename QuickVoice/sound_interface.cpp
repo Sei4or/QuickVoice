@@ -79,6 +79,10 @@ namespace SoundInterface
 		return hr;
 	}
 
+	SoundManager::SoundManager()
+		: sourceVoiceManager(*this)
+	{ }
+
 	HRESULT SoundManager::initialize()
 	{
 		HRESULT hr = S_OK;
@@ -90,9 +94,7 @@ namespace SoundInterface
 			throw hr;
 		}
 
-		this->pXAudio2 = std::shared_ptr<IXAudio2>(rawPXAudio2, [](IXAudio2* p) {
-			p->Release();
-		});
+		this->pXAudio2 = std::unique_ptr<IXAudio2>(rawPXAudio2);
 
 		// Create a Mastering Voice
 		IXAudio2MasteringVoice* rawPMasterVoice;
@@ -101,9 +103,7 @@ namespace SoundInterface
 			throw hr;
 		}
 
-		this->pMasterVoice = std::shared_ptr<IXAudio2MasteringVoice>(rawPMasterVoice);
-
-		this->sourceVoiceManager.initialize(this->pXAudio2);
+		this->pMasterVoice = std::unique_ptr<IXAudio2MasteringVoice>(rawPMasterVoice);
 	}
 
 	HRESULT SoundManager::loadSound(short int soundId)
@@ -145,13 +145,6 @@ namespace SoundInterface
 		}
 
 		FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-		if (this->loadedSounds.size() == 0)
-		{
-			_globalCvarManager->log("Updating wfx");
-			WAVEFORMATEXTENSIBLE* wfx = new WAVEFORMATEXTENSIBLE();
-			ReadChunkData(hFile, wfx, dwChunkSize, dwChunkPosition);
-			this->sourceVoiceManager.updateWfx(wfx);
-		}
 
 		//fill out the audio data buffer with the contents of the fourccDATA chunk
 		FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
@@ -207,7 +200,7 @@ namespace SoundInterface
 	HRESULT SoundManager::setVolume(float newVolume)
 	{
 		HRESULT hr = S_OK;
-		// FAILED(hr = this->pMasterVoice->SetVolume(newVolume));
+		FAILED(hr = this->pMasterVoice->SetVolume(newVolume));
 		return hr;
 	}
 }
