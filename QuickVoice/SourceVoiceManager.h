@@ -13,6 +13,7 @@ namespace SoundInterface
 	public:
 		SourceVoiceManager(SoundManager& soundManager);
 		std::shared_ptr<IXAudio2SourceVoice> getReadySourceVoice();
+		void unload();
 	private:
 		SoundManager& soundManager;
 		std::vector<std::shared_ptr<IXAudio2SourceVoice>> sourceVoices;

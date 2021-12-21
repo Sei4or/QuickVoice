@@ -42,7 +42,8 @@ void QuickVoice::hookChatMessageEvent()
 					this->soundManager.playSound(SoundInterface::quickChatIds.at(bMessage));
 				}
 			}
-		});
+		}
+	);
 }
 
 void QuickVoice::unHookChatMessageEvent()
@@ -103,5 +104,6 @@ void QuickVoice::onLoad()
 
 void QuickVoice::onUnload()
 {
-	// soundManager.unload();
+	this->unHookChatMessageEvent();
+	this->soundManager.unload();
 }

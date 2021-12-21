@@ -66,4 +66,13 @@ namespace SoundInterface
 		this->readySourceVoiceIndices->pop_front();
 		return this->sourceVoices.at(sourceVoiceIndex);
 	}
+
+	void SourceVoiceManager::unload()
+	{
+		for (std::vector<std::shared_ptr<IXAudio2SourceVoice>>::iterator i = this->sourceVoices.begin(); i != this->sourceVoices.end(); i++)
+		{
+			(*i)->DestroyVoice();
+			i->reset();
+		}
+	}
 }

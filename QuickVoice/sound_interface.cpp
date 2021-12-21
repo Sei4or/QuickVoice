@@ -195,6 +195,10 @@ namespace SoundInterface
 	void SoundManager::unload()
 	{
 		unloadSounds();
+		this->sourceVoiceManager.unload();
+		this->pMasterVoice.release();
+		this->pXAudio2->Release();
+		this->pXAudio2.release();
 	}
 	
 	HRESULT SoundManager::setVolume(float newVolume)
