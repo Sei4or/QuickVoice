@@ -83,27 +83,26 @@ namespace SoundInterface
 		: sourceVoiceManager(*this)
 	{ }
 
+	SoundManager::~SoundManager()
+	{
+		if (this->pXAudio2) this->pXAudio2->Release();
+	}
+
 	HRESULT SoundManager::initialize()
 	{
 		HRESULT hr = S_OK;
 
 		// Create an interface to use the XAudio2 engine
-		IXAudio2* rawPXAudio2;
-		if (FAILED(hr = XAudio2Create(&rawPXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
+		if (FAILED(hr = XAudio2Create(&this->pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
 		{
 			throw hr;
 		}
-
-		this->pXAudio2 = std::unique_ptr<IXAudio2>(rawPXAudio2);
 
 		// Create a Mastering Voice
-		IXAudio2MasteringVoice* rawPMasterVoice;
-		if (FAILED(hr = pXAudio2->CreateMasteringVoice(&rawPMasterVoice)))
+		if (FAILED(hr = pXAudio2->CreateMasteringVoice(&this->pMasterVoice)))
 		{
 			throw hr;
 		}
-
-		this->pMasterVoice = std::unique_ptr<IXAudio2MasteringVoice>(rawPMasterVoice);
 	}
 
 	HRESULT SoundManager::loadSound(short int soundId)
@@ -168,7 +167,7 @@ namespace SoundInterface
 		}
 
 		HRESULT hr = S_OK;
-		std::shared_ptr<IXAudio2SourceVoice> pSourceVoice = sourceVoiceManager.getReadySourceVoice();
+		IXAudio2SourceVoice* pSourceVoice = sourceVoiceManager.getReadySourceVoice();
 
 		if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&this->loadedSounds.at(soundId))))
 		{
@@ -189,16 +188,16 @@ namespace SoundInterface
 
 	void SoundManager::unloadSounds()
 	{
-		this->loadedSounds.clear();
+		for (std::unordered_map<short int, XAUDIO2_BUFFER>::iterator i = this->loadedSounds.begin(); i != this->loadedSounds.end(); i++)
+		{
+			delete[] i->second.pAudioData;
+		}
 	}
 
 	void SoundManager::unload()
 	{
 		unloadSounds();
 		this->sourceVoiceManager.unload();
-		this->pMasterVoice.release();
-		this->pXAudio2->Release();
-		this->pXAudio2.release();
 	}
 	
 	HRESULT SoundManager::setVolume(float newVolume)

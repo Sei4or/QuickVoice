@@ -40,7 +40,7 @@ namespace SoundInterface
 		: soundManager(soundManager), readySourceVoiceIndices(std::make_shared<std::deque<short int>>())
 	{ }
 
-	std::shared_ptr<IXAudio2SourceVoice> SourceVoiceManager::getReadySourceVoice()
+	IXAudio2SourceVoice* SourceVoiceManager::getReadySourceVoice()
 	{
 		HRESULT hr = S_OK;
 
@@ -50,16 +50,18 @@ namespace SoundInterface
 			SourceVoiceCallback* sourceVoiceCallback = new SourceVoiceCallback(this->sourceVoices.size(), this->readySourceVoiceIndices);
 			if (FAILED(hr = this->soundManager.pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&this->wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, sourceVoiceCallback)))
 			{
+				delete sourceVoiceCallback;
 				std::stringstream stringStream;
 				stringStream << "Error code: " << std::hex << hr << std::endl;
 				_globalCvarManager->log(stringStream.str());
 				return nullptr; // TODO: Good solution to return errors
 			}
 
-			std::shared_ptr<IXAudio2SourceVoice> sourceVoice = std::shared_ptr<IXAudio2SourceVoice>(pSourceVoice);
+			// std::shared_ptr<IXAudio2SourceVoice> sourceVoice = std::shared_ptr<IXAudio2SourceVoice>(pSourceVoice); // [](IXAudio2SourceVoice* sourceVoice) { sourceVoice->DestroyVoice(); }
 			_globalCvarManager->log("Created another source");
-			this->sourceVoices.push_back(sourceVoice);
-			return sourceVoice;
+			this->sourceVoiceCallbacks.push_back(sourceVoiceCallback);
+			this->sourceVoices.push_back(pSourceVoice);
+			return pSourceVoice;
 		}
 
 		short int sourceVoiceIndex = this->readySourceVoiceIndices->at(0);
@@ -69,10 +71,10 @@ namespace SoundInterface
 
 	void SourceVoiceManager::unload()
 	{
-		for (std::vector<std::shared_ptr<IXAudio2SourceVoice>>::iterator i = this->sourceVoices.begin(); i != this->sourceVoices.end(); i++)
+		this->sourceVoices.clear();
+		for (std::vector<SourceVoiceCallback*>::iterator i = this->sourceVoiceCallbacks.begin(); i != this->sourceVoiceCallbacks.end(); i++)
 		{
-			(*i)->DestroyVoice();
-			i->reset();
-		}
+			delete *i;
+		}			
 	}
 }
