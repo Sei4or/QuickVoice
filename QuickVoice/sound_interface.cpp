@@ -3,7 +3,9 @@
 #include "QuickVoice.h"
 
 #include <xaudio2.h>
+#include <sstream>
 
+// Little-Endian
 #define fourccRIFF 'FFIR'
 #define fourccDATA 'atad'
 #define fourccFMT ' tmf'
@@ -13,72 +15,6 @@
 
 namespace SoundInterface
 {
-	HRESULT FindChunk(HANDLE hFile, DWORD fourcc, DWORD& dwChunkSize, DWORD& dwChunkDataPosition)
-	{
-		HRESULT hr = S_OK;
-		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
-			return HRESULT_FROM_WIN32(GetLastError());
-
-		DWORD dwChunkType;
-		DWORD dwChunkDataSize;
-		DWORD dwRIFFDataSize = 0;
-		DWORD dwFileType;
-		DWORD bytesRead = 0;
-		DWORD dwOffset = 0;
-
-		while (hr == S_OK)
-		{
-			DWORD dwRead;
-			if (0 == ReadFile(hFile, &dwChunkType, sizeof(DWORD), &dwRead, NULL))
-				hr = HRESULT_FROM_WIN32(GetLastError());
-
-			if (0 == ReadFile(hFile, &dwChunkDataSize, sizeof(DWORD), &dwRead, NULL))
-				hr = HRESULT_FROM_WIN32(GetLastError());
-
-			switch (dwChunkType)
-			{
-			case fourccRIFF:
-				dwRIFFDataSize = dwChunkDataSize;
-				dwChunkDataSize = 4;
-				if (0 == ReadFile(hFile, &dwFileType, sizeof(DWORD), &dwRead, NULL))
-					hr = HRESULT_FROM_WIN32(GetLastError());
-				break;
-
-			default:
-				if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkDataSize, NULL, FILE_CURRENT))
-					return HRESULT_FROM_WIN32(GetLastError());
-			}
-
-			dwOffset += sizeof(DWORD) * 2;
-
-			if (dwChunkType == fourcc)
-			{
-				dwChunkSize = dwChunkDataSize;
-				dwChunkDataPosition = dwOffset;
-				return S_OK;
-			}
-
-			dwOffset += dwChunkDataSize;
-
-			if (bytesRead >= dwRIFFDataSize) return S_FALSE;
-
-		}
-
-		return S_OK;
-
-	}
-
-	HRESULT ReadChunkData(HANDLE hFile, void* buffer, DWORD buffersize, DWORD bufferoffset)
-	{
-		HRESULT hr = S_OK;
-		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, bufferoffset, NULL, FILE_BEGIN))
-			return HRESULT_FROM_WIN32(GetLastError());
-		DWORD dwRead;
-		if (0 == ReadFile(hFile, buffer, buffersize, &dwRead, NULL))
-			hr = HRESULT_FROM_WIN32(GetLastError());
-		return hr;
-	}
-
 	SoundManager::SoundManager()
 		: sourceVoiceManager(*this)
 	{ }
@@ -105,14 +41,114 @@ namespace SoundInterface
 		}
 	}
 
+	// Bjarne <3
+	HRESULT verifyAndReadWaveData(HANDLE hFile, DWORD& dwDataSize, BYTE*& pDataBuffer)
+	{
+		DWORD bytesRead;
+
+		// Verify RIFF Spec
+		DWORD dwChunkID;
+		if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		if (bytesRead != 4 || dwChunkID != fourccRIFF)
+		{
+			return E_INVALIDARG;
+		}
+
+		// Ignore Length
+		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 4, NULL, FILE_CURRENT))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+
+		// Verify WAVE Format
+		DWORD dwFormat;
+		if (FALSE == ReadFile(hFile, &dwFormat, 4, &bytesRead, NULL))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		if (bytesRead != 4 || dwFormat != fourccWAVE)
+		{
+			return E_INVALIDARG;
+		}
+
+		// Verify FMT Header
+		if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		if (bytesRead != 4 || dwChunkID != fourccFMT)
+		{
+			return E_INVALIDARG;
+		}
+
+		DWORD dwChunkSize;
+		if (FALSE == ReadFile(hFile, &dwChunkSize, 4, &bytesRead, NULL))
+		{
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		if (bytesRead != 4)
+		{
+			return E_INVALIDARG;
+		}
+
+		// Ignore FMT Info (easier for XAudio2)
+
+		// Ignore any other subgroups until DATA header
+		while (dwChunkID != fourccDATA)
+		{
+			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkSize, NULL, FILE_CURRENT))
+			{
+				return HRESULT_FROM_WIN32(GetLastError());
+			}
+
+			if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
+			{
+				return HRESULT_FROM_WIN32(GetLastError());
+			}
+			if (bytesRead != 4)
+			{
+				return E_INVALIDARG;
+			}
+
+			if (FALSE == ReadFile(hFile, &dwChunkSize, 4, &bytesRead, NULL))
+			{
+				return HRESULT_FROM_WIN32(GetLastError());
+			}
+			if (bytesRead != 4)
+			{
+				return E_INVALIDARG;
+			}
+		}
+
+		// Write Data
+		dwDataSize = dwChunkSize;
+		BYTE* tPDataBuffer = new BYTE[dwChunkSize];
+		if (FALSE == ReadFile(hFile, tPDataBuffer, dwChunkSize, &bytesRead, NULL))
+		{
+			delete[] tPDataBuffer;
+			return HRESULT_FROM_WIN32(GetLastError());
+		}
+		if (bytesRead != dwChunkSize)
+		{
+			delete[] tPDataBuffer;
+			return E_INVALIDARG;
+		}
+		pDataBuffer = tPDataBuffer;
+
+		return S_OK;
+	}
+
 	HRESULT SoundManager::loadSound(short int soundId)
 	{
 		HRESULT hr = S_OK;
 
 		XAUDIO2_BUFFER buffer = { 0 };
 
-		TCHAR* strFileName = (TCHAR*)(_globalGameWrapper->GetDataFolder() / "QuickVoice" / (std::to_string(soundId) + ".wav")).c_str();
 		// Open the file
+		TCHAR* strFileName = (TCHAR*)(_globalGameWrapper->GetDataFolder() / "QuickVoice" / (std::to_string(soundId) + ".wav")).c_str();
 		HANDLE hFile = CreateFile(
 			strFileName,
 			GENERIC_READ,
@@ -122,37 +158,23 @@ namespace SoundInterface
 			0,
 			NULL);
 
+		// File open failure
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
-			HRESULT_FROM_WIN32(GetLastError());
+			return HRESULT_FROM_WIN32(GetLastError());
 		}
-
-		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 0, NULL, FILE_BEGIN))
-		{
-			HRESULT_FROM_WIN32(GetLastError());
-		}
-
+		
+		// Retrieve Wave File Data
 		DWORD dwChunkSize;
-		DWORD dwChunkPosition;
-		//check the file type, should be fourccWAVE or 'XWMA'
-		FindChunk(hFile, fourccRIFF, dwChunkSize, dwChunkPosition);
-		DWORD filetype;
-		ReadChunkData(hFile, &filetype, sizeof(DWORD), dwChunkPosition);
-		if (filetype != fourccWAVE)
+		BYTE* pDataBuffer = nullptr;
+		if (FAILED(hr = verifyAndReadWaveData(hFile, dwChunkSize, pDataBuffer)))
 		{
-			S_FALSE;
+			return hr;
 		}
 
-		FindChunk(hFile, fourccFMT, dwChunkSize, dwChunkPosition);
-
-		//fill out the audio data buffer with the contents of the fourccDATA chunk
-		FindChunk(hFile, fourccDATA, dwChunkSize, dwChunkPosition);
-		BYTE* pDataBuffer = new BYTE[dwChunkSize];
-		ReadChunkData(hFile, pDataBuffer, dwChunkSize, dwChunkPosition);
-
-		buffer.AudioBytes = dwChunkSize;  //size of the audio buffer in bytes
-		buffer.pAudioData = pDataBuffer;  //buffer containing audio data
-		buffer.Flags = XAUDIO2_END_OF_STREAM; // tell the source voice not to expect any data after this buffer
+		buffer.AudioBytes = dwChunkSize; // Size of the buffer in bytes
+		buffer.pAudioData = pDataBuffer; // Audio buffer data
+		buffer.Flags = 0; // Possible data after buffers
 
 		this->loadedSounds.insert(std::make_pair(soundId, buffer));
 
@@ -161,12 +183,16 @@ namespace SoundInterface
 
 	HRESULT SoundManager::playSound(short int soundId)
 	{
+		HRESULT hr = S_OK;
+
 		if (this->loadedSounds.find(soundId) == this->loadedSounds.end())
 		{
-			loadSound(soundId);
+			if (FAILED(hr = loadSound(soundId)))
+			{
+				return hr;
+			}
 		}
 
-		HRESULT hr = S_OK;
 		IXAudio2SourceVoice* pSourceVoice = sourceVoiceManager.getReadySourceVoice();
 
 		if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&this->loadedSounds.at(soundId))))
