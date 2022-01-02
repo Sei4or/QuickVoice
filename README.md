@@ -1,6 +1,6 @@
 # QuickVoice
 
-QuickVoice allows QuickChats to be played to your ears straight from the chat!
+QuickVoice allows QuickChats to be played in your ears straight from the chat!
 
 ![QuickVoice Banner](banner.png)
 
