@@ -31,13 +31,15 @@ namespace SoundInterface
 		// Create an interface to use the XAudio2 engine
 		if (FAILED(hr = XAudio2Create(&this->pXAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR)))
 		{
-			throw hr;
+			LOG("Failed to create XAudio2 engine. HRESULT: {}", hr);
+			return hr;
 		}
 
 		// Create a Mastering Voice
 		if (FAILED(hr = pXAudio2->CreateMasteringVoice(&this->pMasterVoice)))
 		{
-			throw hr;
+			LOG("Failed to create mastering voice. HRESULT: {}", hr);
+			return hr;
 		}
 	}
 
@@ -50,47 +52,61 @@ namespace SoundInterface
 		DWORD dwChunkID;
 		if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to verify RIFF header. HRESULT: {}", hr);
+			return hr;
 		}
 		if (bytesRead != 4 || dwChunkID != fourccRIFF)
 		{
+			LOG("Invalid RIFF header");
 			return E_INVALIDARG;
 		}
 
 		// Ignore Length
 		if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, 4, NULL, FILE_CURRENT))
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());;
+			LOG("Failed to ignore length. HRESULT: {}", hr);
+			return hr;
 		}
 
 		// Verify WAVE Format
 		DWORD dwFormat;
 		if (FALSE == ReadFile(hFile, &dwFormat, 4, &bytesRead, NULL))
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to read format. HRESULT: {}", hr);
+			return hr;
 		}
 		if (bytesRead != 4 || dwFormat != fourccWAVE)
 		{
+			LOG("Invalid format");
 			return E_INVALIDARG;
 		}
 
 		// Verify FMT Header
 		if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to read FMT header. HRESULT: {}", hr);
+			return hr;
 		}
 		if (bytesRead != 4 || dwChunkID != fourccFMT)
 		{
+			LOG("Failed to verify FMT header");
 			return E_INVALIDARG;
 		}
 
 		DWORD dwChunkSize;
 		if (FALSE == ReadFile(hFile, &dwChunkSize, 4, &bytesRead, NULL))
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to read FMT chunk size. HRESULT: {}", hr);
+			return hr;
 		}
 		if (bytesRead != 4)
 		{
+			LOG("Failed to verify FMT chunk size");
 			return E_INVALIDARG;
 		}
 
@@ -101,24 +117,32 @@ namespace SoundInterface
 		{
 			if (INVALID_SET_FILE_POINTER == SetFilePointer(hFile, dwChunkSize, NULL, FILE_CURRENT))
 			{
-				return HRESULT_FROM_WIN32(GetLastError());
+				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				LOG("Failed to skip subchunk. HRESULT: {}", hr);
+				return hr;
 			}
 
 			if (FALSE == ReadFile(hFile, &dwChunkID, 4, &bytesRead, NULL))
 			{
-				return HRESULT_FROM_WIN32(GetLastError());
+				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				LOG("Failed to read subchunk ID. HRESULT: {}", hr);
+				return hr;
 			}
 			if (bytesRead != 4)
 			{
+				LOG("Failed to verify subchunk ID");
 				return E_INVALIDARG;
 			}
 
 			if (FALSE == ReadFile(hFile, &dwChunkSize, 4, &bytesRead, NULL))
 			{
-				return HRESULT_FROM_WIN32(GetLastError());
+				HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+				LOG("Failed to read subchunk size. HRESULT: {}", hr);
+				return hr;
 			}
 			if (bytesRead != 4)
 			{
+				LOG("Failed to verify subchunk size");
 				return E_INVALIDARG;
 			}
 		}
@@ -129,11 +153,14 @@ namespace SoundInterface
 		if (FALSE == ReadFile(hFile, tPDataBuffer, dwChunkSize, &bytesRead, NULL))
 		{
 			delete[] tPDataBuffer;
-			return HRESULT_FROM_WIN32(GetLastError());
+			HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to read sound data. HRESULT: {}", hr);
+			return hr;
 		}
 		if (bytesRead != dwChunkSize)
 		{
 			delete[] tPDataBuffer;
+			LOG("Failed to verify sound data");
 			return E_INVALIDARG;
 		}
 		pDataBuffer = tPDataBuffer;
@@ -161,7 +188,9 @@ namespace SoundInterface
 		// File open failure
 		if (INVALID_HANDLE_VALUE == hFile)
 		{
-			return HRESULT_FROM_WIN32(GetLastError());
+			hr = HRESULT_FROM_WIN32(GetLastError());
+			LOG("Failed to open sound file ({}). HRESULT: {}", soundId, hr);
+			return hr;
 		}
 		
 		// Retrieve Wave File Data
@@ -169,6 +198,7 @@ namespace SoundInterface
 		BYTE* pDataBuffer = nullptr;
 		if (FAILED(hr = verifyAndReadWaveData(hFile, dwChunkSize, pDataBuffer)))
 		{
+			LOG("Failed to verify and read wave data ({}). HRESULT: {}", soundId, hr);
 			return hr;
 		}
 
@@ -189,14 +219,25 @@ namespace SoundInterface
 		{
 			if (FAILED(hr = loadSound(soundId)))
 			{
+				LOG("Failed to load sound ({}). HRESULT: {}", soundId, hr);
 				return hr;
 			}
 		}
 
-		IXAudio2SourceVoice* pSourceVoice = sourceVoiceManager.getReadySourceVoice();
+		IXAudio2SourceVoice* pSourceVoice;
+		try
+		{
+			pSourceVoice = sourceVoiceManager.getReadySourceVoice();
+		}
+		catch (HRESULT hr)
+		{
+			LOG("Failed to get ready source voice. HRESULT: {}", hr);
+			return hr;
+		}
 
 		if (FAILED(hr = pSourceVoice->SubmitSourceBuffer(&this->loadedSounds.at(soundId))))
 		{
+			LOG("Failed to submit source buffer. HRESULT: {}", hr);
 			return hr;
 		}
 
@@ -206,9 +247,13 @@ namespace SoundInterface
 
 	void SoundManager::preloadSounds()
 	{
+		HRESULT hr;
 		for (std::unordered_map<std::string, short int>::iterator i = quickChatIds.begin(); i != quickChatIds.end(); i++)
 		{
-			loadSound(i->second);
+			if (FAILED(hr = loadSound(i->second)))
+			{
+				LOG("Failed to preload sound ({}). HRESULT: {}", i->first, hr);
+			}
 		}
 	}
 

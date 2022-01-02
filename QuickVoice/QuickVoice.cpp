@@ -39,7 +39,11 @@ void QuickVoice::hookChatMessageEvent()
 
 				if (SoundInterface::quickChatIds.find(bMessage) != SoundInterface::quickChatIds.end())
 				{
-					this->soundManager.playSound(SoundInterface::quickChatIds.at(bMessage));
+					HRESULT hr;
+					if (FAILED(hr = this->soundManager.playSound(SoundInterface::quickChatIds.at(bMessage))))
+					{
+						LOG("Failed to play sound ({}). HRESULT: {}", bMessage, hr);
+					}
 				}
 			}
 		}
@@ -66,7 +70,11 @@ void QuickVoice::onLoad()
 	if (enabled)
 	{
 		this->hookChatMessageEvent();
-		this->soundManager.initialize();
+		HRESULT hr;
+		if (FAILED(hr = this->soundManager.initialize()))
+		{
+			LOG("Failed to initialize the sound manager. HRESULT: {}", hr);
+		}
 	}
 	enabledCvar.addOnValueChanged([this](std::string oldValue, CVarWrapper newCvar) {
 		if (newCvar.getBoolValue())
@@ -98,7 +106,11 @@ void QuickVoice::onLoad()
 		volumeCvar = cvarManager->registerCvar("qv_volume", "1.0");
 	}
 	volumeCvar.addOnValueChanged([this](std::string oldValue, CVarWrapper newCvar) {
-		this->soundManager.setVolume(newCvar.getFloatValue());
+		HRESULT hr;
+		if (FAILED(hr = this->soundManager.setVolume(newCvar.getFloatValue())))
+		{
+			LOG("Failed to set volume to {}. HRESULT: {}", newCvar.getFloatValue(), hr);
+		}
 	});
 }
 

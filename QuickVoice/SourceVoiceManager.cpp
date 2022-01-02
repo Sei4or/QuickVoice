@@ -51,14 +51,9 @@ namespace SoundInterface
 			if (FAILED(hr = this->soundManager.pXAudio2->CreateSourceVoice(&pSourceVoice, (WAVEFORMATEX*)&this->wfx, 0, XAUDIO2_DEFAULT_FREQ_RATIO, sourceVoiceCallback)))
 			{
 				delete sourceVoiceCallback;
-				std::stringstream stringStream;
-				stringStream << "Error code: " << std::hex << hr << std::endl;
-				_globalCvarManager->log(stringStream.str());
-				return nullptr; // TODO: Good solution to return errors
+				throw hr;
 			}
 
-			// std::shared_ptr<IXAudio2SourceVoice> sourceVoice = std::shared_ptr<IXAudio2SourceVoice>(pSourceVoice); // [](IXAudio2SourceVoice* sourceVoice) { sourceVoice->DestroyVoice(); }
-			_globalCvarManager->log("Created another source");
 			this->sourceVoiceCallbacks.push_back(sourceVoiceCallback);
 			this->sourceVoices.push_back(pSourceVoice);
 			return pSourceVoice;
