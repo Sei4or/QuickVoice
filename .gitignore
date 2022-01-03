@@ -6,6 +6,8 @@
 # BakkesMod
 ./QuickVoice/all_sounds
 ./QuickVoice/previous_audio_solutions.cpp
+./bakkespluginspackage
+*.xcf
 
 # User-specific files
 *.rsuser
