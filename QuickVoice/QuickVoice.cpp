@@ -41,7 +41,7 @@ void QuickVoice::hookChatMessageEvent()
 				{
 					short int soundId = SoundInterface::quickChatIds.at(bMessage);
 
-					ServerWrapper sw = gameWrapper->GetOnlineGame();
+					ServerWrapper sw = gameWrapper->GetCurrentGameState();
 					if (!sw) return;
 					GameSettingPlaylistWrapper playlist = sw.GetPlaylist();
 					if (!playlist) return;
