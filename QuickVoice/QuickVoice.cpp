@@ -39,6 +39,14 @@ void QuickVoice::hookChatMessageEvent()
 
 				if (SoundInterface::quickChatIds.find(bMessage) != SoundInterface::quickChatIds.end())
 				{
+					short int soundId = SoundInterface::quickChatIds.at(bMessage);
+
+					ServerWrapper sw = gameWrapper->GetOnlineGame();
+					if (!sw) return;
+					GameSettingPlaylistWrapper playlist = sw.GetPlaylist();
+					if (!playlist) return;
+					if (playlist.GetPlaylistId() != 24) return;
+
 					HRESULT hr;
 					if (FAILED(hr = this->soundManager.playSound(SoundInterface::quickChatIds.at(bMessage))))
 					{
